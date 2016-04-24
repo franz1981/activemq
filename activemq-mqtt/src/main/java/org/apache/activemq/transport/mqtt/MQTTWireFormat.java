@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,18 +16,14 @@
  */
 package org.apache.activemq.transport.mqtt;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 import org.apache.activemq.util.ByteArrayInputStream;
 import org.apache.activemq.util.ByteArrayOutputStream;
 import org.apache.activemq.util.ByteSequence;
 import org.apache.activemq.wireformat.WireFormat;
 import org.fusesource.hawtbuf.Buffer;
 import org.fusesource.mqtt.codec.MQTTFrame;
+
+import java.io.*;
 
 /**
  * Implements marshalling and unmarsalling the <a
@@ -81,29 +77,32 @@ public class MQTTWireFormat implements WireFormat {
         }
     }
 
-    @Override
-    public Object unmarshal(DataInput dataIn) throws IOException {
-        byte header = dataIn.readByte();
-
+    private static int readLength(DataInput dataIn) throws IOException {
         byte digit;
-        int multiplier = 1;
         int length = 0;
+        int shift = 0;
         do {
             digit = dataIn.readByte();
-            length += (digit & 0x7F) * multiplier;
-            multiplier <<= 7;
-        }
-        while ((digit & 0x80) != 0);
+            //digit & 0x7F === use only the first 7 LSB of digit -> EVER POSITIVE!!!
+            //<<shift === multiply by (1<<shift)
+            length += ((digit & 0x7F) << shift);
+            shift+=7;
+        }while (digit > 0);
+        return length;
+    }
 
+    @Override
+    public Object unmarshal(DataInput dataIn) throws IOException {
+        final byte header = dataIn.readByte();
+        final int length = readLength(dataIn);
         if (length >= 0) {
             if (length > getMaxFrameSize()) {
                 throw new IOException("The maximum message length was exceeded");
             }
-
             if (length > 0) {
-                byte[] data = new byte[length];
+                final byte[] data = new byte[length];
                 dataIn.readFully(data);
-                Buffer body = new Buffer(data);
+                final Buffer body = new Buffer(data);
                 return new MQTTFrame(body).header(header);
             } else {
                 return new MQTTFrame().header(header);
@@ -113,19 +112,19 @@ public class MQTTWireFormat implements WireFormat {
     }
 
     /**
-     * @param the version of the wire format
-     */
-    @Override
-    public void setVersion(int version) {
-        this.version = version;
-    }
-
-    /**
      * @return the version of the wire format
      */
     @Override
     public int getVersion() {
         return this.version;
+    }
+
+    /**
+     * @param version the version of the wire format
+     */
+    @Override
+    public void setVersion(int version) {
+        this.version = version;
     }
 
     /**
@@ -139,8 +138,7 @@ public class MQTTWireFormat implements WireFormat {
      * Sets the maximum frame size for an incoming MQTT frame.  The protocl limit is
      * 256 megabytes and this value cannot be set higher.
      *
-     * @param maxFrameSize
-     *        the maximum allowed frame size for a single MQTT frame.
+     * @param maxFrameSize the maximum allowed frame size for a single MQTT frame.
      */
     public void setMaxFrameSize(int maxFrameSize) {
         this.maxFrameSize = Math.min(MAX_MESSAGE_LENGTH, maxFrameSize);
@@ -157,8 +155,7 @@ public class MQTTWireFormat implements WireFormat {
      * Sets the timeout value used to fail a connection if no CONNECT frame is read
      * in the given interval.
      *
-     * @param connectTimeout
-     *        the connection frame received timeout value.
+     * @param connectTimeout the connection frame received timeout value.
      */
     public void setConnectAttemptTimeout(long connectTimeout) {
         this.connectAttemptTimeout = connectTimeout;
