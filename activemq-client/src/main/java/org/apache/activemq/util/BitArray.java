@@ -36,28 +36,7 @@ public class BitArray implements Serializable {
     static final int INT_SIZE = 32;
     static final int SHORT_SIZE = 16;
     static final int BYTE_SIZE = 8;
-    private static final long[] BIT_VALUES = {0x0000000000000001L, 0x0000000000000002L, 0x0000000000000004L,
-                                              0x0000000000000008L, 0x0000000000000010L, 0x0000000000000020L,
-                                              0x0000000000000040L, 0x0000000000000080L, 0x0000000000000100L,
-                                              0x0000000000000200L, 0x0000000000000400L, 0x0000000000000800L,
-                                              0x0000000000001000L, 0x0000000000002000L, 0x0000000000004000L,
-                                              0x0000000000008000L, 0x0000000000010000L, 0x0000000000020000L,
-                                              0x0000000000040000L, 0x0000000000080000L, 0x0000000000100000L,
-                                              0x0000000000200000L, 0x0000000000400000L, 0x0000000000800000L,
-                                              0x0000000001000000L, 0x0000000002000000L, 0x0000000004000000L,
-                                              0x0000000008000000L, 0x0000000010000000L, 0x0000000020000000L,
-                                              0x0000000040000000L, 0x0000000080000000L, 0x0000000100000000L,
-                                              0x0000000200000000L, 0x0000000400000000L, 0x0000000800000000L,
-                                              0x0000001000000000L, 0x0000002000000000L, 0x0000004000000000L,
-                                              0x0000008000000000L, 0x0000010000000000L, 0x0000020000000000L,
-                                              0x0000040000000000L, 0x0000080000000000L, 0x0000100000000000L,
-                                              0x0000200000000000L, 0x0000400000000000L, 0x0000800000000000L,
-                                              0x0001000000000000L, 0x0002000000000000L, 0x0004000000000000L,
-                                              0x0008000000000000L, 0x0010000000000000L, 0x0020000000000000L,
-                                              0x0040000000000000L, 0x0080000000000000L, 0x0100000000000000L,
-                                              0x0200000000000000L, 0x0400000000000000L, 0x0800000000000000L,
-                                              0x1000000000000000L, 0x2000000000000000L, 0x4000000000000000L,
-                                              0x8000000000000000L};
+
     private long bits;
     private int length;
 
@@ -84,11 +63,12 @@ public class BitArray implements Serializable {
      */
     public boolean set(int index, boolean flag) {
         length = Math.max(length, index + 1);
-        boolean oldValue = (bits & BIT_VALUES[index]) != 0;
+        final long indexMask = 1L<<index;
+        boolean oldValue = (bits & indexMask) != 0;
         if (flag) {
-            bits |= BIT_VALUES[index];
+            bits |= indexMask;
         } else if (oldValue) {
-            bits &= ~(BIT_VALUES[index]);
+            bits &= ~(indexMask);
         }
         return oldValue;
     }
@@ -98,7 +78,8 @@ public class BitArray implements Serializable {
      * @return the boolean value at this index
      */
     public boolean get(int index) {
-        return (bits & BIT_VALUES[index]) != 0;
+        final long indexMask = 1L<<index;
+        return (bits & indexMask) != 0;
     }
 
     /**
