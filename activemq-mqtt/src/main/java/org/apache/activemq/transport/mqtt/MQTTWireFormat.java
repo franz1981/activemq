@@ -55,18 +55,13 @@ public class MQTTWireFormat implements WireFormat {
         return unmarshal(dis);
     }
 
-    //http://vasters.com/clemensv/2014/06/02/MQTT+An+Implementers+Perspective.aspx
-    /*The second byte is the start of the packet length indicator, which is a sequence of 7-bit integers
-      (value sits in bits 0-6). Whenever bit 7 is set, the next byte carries a further value complement and
-      the current length value shifted up by 7 bits. Thus, a packet length of 127 or less can be expressed in one byte,
-      and as there are four bytes allowed, the encoding allows for packets of up to 256Mbytes [MQTT 2.2.3].*/
     private static void writeLength(int length,DataOutput dataOut) throws IOException {
         do {
             //masks the first 7 LSB of remaining -> digit>=0
             byte digit = (byte) (length & 0x7F);
             //skip the masked bits
             length >>>= 7;
-            //need at least 1 more bytes to represents the length
+            //need at least 1 more byte to represents the length
             if (length > 0) {
                 //add the length continuation bit to the actual digit
                 digit |= 0x80;
