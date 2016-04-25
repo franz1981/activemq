@@ -25,10 +25,19 @@ import java.io.InputStream;
  */
 public class ByteArrayInputStream extends InputStream {
 
+    /**
+     * Shared empty array instance used for empty instances.
+     */
+    private static final byte[] EMPTY_BUFFER = {};
+
     byte buffer[];
     int limit;
     int pos;
     int mark;
+
+    public ByteArrayInputStream() {
+        this(EMPTY_BUFFER, 0, 0);
+    }
 
     public ByteArrayInputStream(byte data[]) {
         this(data, 0, data.length);
@@ -43,6 +52,14 @@ public class ByteArrayInputStream extends InputStream {
         this.mark = offset;
         this.pos = offset;
         this.limit = offset + size;
+    }
+
+    public ByteArrayInputStream wrap(byte data[], int offset, int size){
+        this.buffer = data;
+        this.mark = offset;
+        this.pos = offset;
+        this.limit = offset + size;
+        return this;
     }
 
     public int read() throws IOException {
@@ -96,5 +113,10 @@ public class ByteArrayInputStream extends InputStream {
 
     public void reset() {
         pos = mark;
+    }
+
+    @Override
+    public void close() throws IOException {
+        wrap(EMPTY_BUFFER,0,0);
     }
 }
