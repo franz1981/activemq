@@ -16,20 +16,25 @@
  */
 package org.apache.activemq.util;
 
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+
 public class LongSequenceGenerator {
 
-    private long lastSequenceId;
+    //note: the updater is preferrable to an AtomicInteger due to the reduced generation of instances
+    private static final AtomicLongFieldUpdater<LongSequenceGenerator> LAST_SEQUENCE_ID_UPDATER = AtomicLongFieldUpdater.newUpdater(LongSequenceGenerator.class,"lastSequenceId");
 
-    public synchronized long getNextSequenceId() {
-        return ++lastSequenceId;
+    private volatile long lastSequenceId;
+
+    public long getNextSequenceId() {
+        return LAST_SEQUENCE_ID_UPDATER.incrementAndGet(this);
     }
 
-    public synchronized long getLastSequenceId() {
-        return lastSequenceId;
+    public long getLastSequenceId() {
+        return LAST_SEQUENCE_ID_UPDATER.get(this);
     }
 
-    public synchronized void setLastSequenceId(long l) {
-        lastSequenceId = l;
+    public void setLastSequenceId(long l) {
+        LAST_SEQUENCE_ID_UPDATER.set(this,l);
     }
 
 }
